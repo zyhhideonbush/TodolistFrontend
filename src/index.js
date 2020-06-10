@@ -1,17 +1,77 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import * as serviceWorker from './serviceWorker';
+import React from 'react' ;
+import ReactDOM from 'react-dom' ;
+import axios from 'axios' ;
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+class TodoApp extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = { 
+        items: {}, 
+        text: '',
+        success: false,
+      };
+      this.handleChange = this.handleChange.bind(this);
+      this.handleSubmit = this.handleSubmit.bind(this);
+    }
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();
+    componentDidMount(){
+      axios.get('http://localhost:3001/todos')
+      .then(response=>{
+        let data = response.data.map(data=>data.item);
+        console.log(data);
+        this.setState({items:data,success:true});
+      });
+    }
+   
+    render() {
+      return (
+        <div>
+          <h3>TODO-LIST</h3>
+          <ul>
+          {this.state.success?
+          this.state.items.map((item,index)=>(
+            <li key={item}>{item}</li>
+          ))
+          :
+          'loading......'}
+         </ul>
+          <form onSubmit={this.handleSubmit}>
+            <label htmlFor="new-todo">
+              What needs to be done?
+            </label>
+            <input
+              id="new-todo"
+              onChange={this.handleChange}
+              value={this.state.text}
+            />
+            <button>
+              Add #{this.state.items.length + 1}
+            </button>
+          </form>
+        </div>
+      );
+    }
+
+    handleChange(e) {
+      this.setState({ text: e.target.value });
+    }
+  
+    handleSubmit(e) {
+      e.preventDefault();
+      if (this.state.text.length === 0) {
+        return;
+      }
+      this.setState({success: false});
+      axios.post('http://localhost:3001/todos',{item:this.state.text})
+      .then(response=>{
+        if(response.status===200){
+          window.location.reload();
+        }
+      });
+    }
+  }
+  
+  ReactDOM.render(
+    <TodoApp />,
+    document.getElementById('todos-example')
+  );
